@@ -36,11 +36,53 @@ const mockStats = [
 ];
 
 const Index = () => {
+  const [isVisible, setIsVisible] = useState(false); // Começa invisível
   const [currentScreen, setCurrentScreen] = useState<Screen>('lobby');
   const [timeRemaining, setTimeRemaining] = useState(299); // 4:59
   const [spectatorIndex, setSpectatorIndex] = useState(0);
 
   // Timer countdown for HUD
+  useEffect(() => {
+    const handleNuiMessage = (event: MessageEvent) => {
+      const data = event.data;
+
+      if (data.action === "setVisible") {
+        console.log('Alterando visibilidade para:', data.visible); // LOG
+        setIsVisible(data.visible);
+      }
+
+      if (data.action === "setScreen") {
+        setCurrentScreen(data.screen);
+      }
+      
+      // Mapeie outras ações do client.lua aqui (updateLobby, etc)
+      // Exemplo:
+      // if (data.action === "updateLobby") { ... }
+    };
+
+    window.addEventListener("message", handleNuiMessage);
+
+    return () => {
+      window.removeEventListener("message", handleNuiMessage);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isVisible && e.key === "Escape") {
+        // Envia callback para fechar no Lua
+        fetch(`https://${(window as any).GetParentResourceName?.() || 'nome-do-script'}/closeUI`, {
+          method: 'POST',
+          body: JSON.stringify({})
+        });
+        setIsVisible(false); // Fecha visualmente na hora
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isVisible]);
+
   useEffect(() => {
     if (currentScreen !== 'hud') return;
 

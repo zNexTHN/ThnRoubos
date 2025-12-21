@@ -3,12 +3,16 @@ local Proxy = module("vrp","lib/Proxy")
 vRP = Proxy.getInterface("vRP")
 src = Tunnel.getInterface(GetCurrentResourceName(),src)
 
+
+local isNuiVisible = false 
 function OpenRobberyUI()
+    print('Enviado!')
     SetNuiFocus(true, true)
     SendNUIMessage({
         action = "setVisible",
         visible = true
     })
+    isNuiVisible = true 
 end
 
 -- Fechar a UI
@@ -18,6 +22,7 @@ function CloseRobberyUI()
         action = "setVisible",
         visible = false
     })
+    isNuiVisible = false
 end
 
 
@@ -34,11 +39,12 @@ RegisterCommand('roubo', function(source,args,rawCommand)
     if args[1] then
         print('Argumento: '..args[1])
         SetScreen(args[1])
+        OpenRobberyUI() -- Adicione esta linha para abrir a UI e dar foco
+    else
+        -- Se quiser abrir direto no lobby sem argumentos:
+        SetScreen('lobby')
+        OpenRobberyUI()
     end
-    -- SetScreen('lobby')     -- Mostra tela de preparação
-    -- SetScreen('hud')       -- Mostra HUD ativo (após iniciar roubo)
-    -- SetScreen('spectator') -- Mostra modo espectador (jogador morreu)
-    -- SetScreen('result')    -- Mostra resultados finais
 end)
 
 function UpdateLobbyData(data)
