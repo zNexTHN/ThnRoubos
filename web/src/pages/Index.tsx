@@ -127,6 +127,8 @@ const Index = () => {
     );
   }, []);
 
+  if (!isVisible) return null;
+
   return (
     <div className="min-h-screen">
       <AnimatePresence mode="wait">
