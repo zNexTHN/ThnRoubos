@@ -291,8 +291,6 @@ const Index = () => {
         {currentScreen === 'hud' && (
           <HUDScreen
             key="hud"
-            timeRemaining={timeRemaining}
-            totalTime={totalTime}
             killFeed={killFeed}
             squad={squad}
           />
@@ -316,7 +314,6 @@ const Index = () => {
           />
         )}
       </AnimatePresence>
-
     </div>
   );
 };

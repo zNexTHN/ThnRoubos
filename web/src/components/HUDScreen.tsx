@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Skull, Timer, Shield, Heart } from 'lucide-react';
+import { Skull, Shield } from 'lucide-react';
 
 interface KillFeedEntry {
   id: string;
@@ -26,46 +26,9 @@ interface HUDScreenProps {
   squad: SquadMember[];
 }
 
-export function HUDScreen({ timeRemaining, totalTime, killFeed, squad }: HUDScreenProps) {
-  const minutes = Math.floor(timeRemaining / 60);
-  const seconds = timeRemaining % 60;
-  const progress = (timeRemaining / totalTime) * 100;
-  const isUrgent = timeRemaining < 60;
-
+export function HUDScreen({ killFeed, squad }: Omit<HUDScreenProps, 'timeRemaining' | 'totalTime'>) {
   return (
     <div className="fixed inset-0 pointer-events-none">
-      {/* Top Center - Timer */}
-      <div className="absolute top-6 left-1/2 -translate-x-1/2">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="glass-panel rounded-2xl px-8 py-4 text-center"
-        >
-          <div className="flex items-center gap-2 justify-center mb-2">
-            <Timer className={`w-5 h-5 ${isUrgent ? 'text-primary' : 'text-secondary'}`} />
-            <span className="text-xs text-muted-foreground uppercase tracking-wider">
-              Tempo Restante
-            </span>
-          </div>
-          <p
-            className={`font-tactical text-5xl font-bold tracking-widest ${
-              isUrgent ? 'timer-urgent text-glow-red' : 'text-foreground'
-            }`}
-          >
-            {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
-          </p>
-          <div className="mt-3 h-1.5 bg-muted rounded-full overflow-hidden w-48">
-            <motion.div
-              className={`h-full rounded-full ${
-                isUrgent ? 'bg-primary' : 'bg-secondary'
-              }`}
-              initial={{ width: '100%' }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.5 }}
-            />
-          </div>
-        </motion.div>
-      </div>
 
       {/* Top Left - Kill Feed */}
       <div className="absolute top-6 left-6 space-y-2 max-w-sm">

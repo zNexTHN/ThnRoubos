@@ -28,7 +28,7 @@ export function ResultScreen({ isVictory, stats, onClose }: ResultScreenProps) {
   }, []);
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+    <div className="fixed inset-0 flex items-center justify-center p-4 bg-transparent backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}

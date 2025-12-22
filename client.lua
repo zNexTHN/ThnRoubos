@@ -36,6 +36,74 @@ function SetScreen(screenName)
     SendNUIMessage({ action = "setScreen", screen = screenName })
 end
 
+function AddKillFeed(killer, victim, isTeamKill)
+    SendNUIMessage({
+        action = "addKill",
+        kill = {
+            killer = killer,
+            victim = victim,
+            isTeamKill = isTeamKill, -- true = aliado matou policial
+            timestamp = GetGameTimer()
+        } 
+    })
+end 
+
+function UpdateSquad(members)
+    SendNUIMessage({
+        action = "updateSquad",
+        squad = {
+            {
+                id = 1,
+                name = "Player Um",
+                health = 100,
+                maxHealth = 100,
+                isDead = false
+            },
+            {
+                id = 2,
+                name = "Player Dois",
+                health = 45,
+                maxHealth = 100,
+                isDead = false
+            },
+            {
+                id = 3,
+                name = "Player Três",
+                health = 0,
+                maxHealth = 100,
+                isDead = true
+            }
+        }
+    })
+end
+
+
+function ShowDeathNotice()
+    SendNUIMessage({
+        action = "playerDied"
+    })
+end
+
+function ShowResults(victory, stats)
+    SendNUIMessage({
+        action = "showResults",
+        data = {
+            victory = victory, -- true = missão cumprida, false = falhou
+            mvp = {
+                name = "Player Um",
+                kills = 5,
+                damage = 2500
+            },
+            players = {
+                { name = "Player Um", kills = 5, damage = 2500, xp = 1200 },
+                { name = "Player Dois", kills = 3, damage = 1800, xp = 800 },
+                { name = "Player Três", kills = 1, damage = 600, xp = 400 }
+            },
+            totalReward = "R$ 500.000"
+        }
+    })
+end
+
 -- =========================================================
 -- INTERAÇÃO NO MAPA (DRAW MARKER)
 -- =========================================================
@@ -101,7 +169,9 @@ RegisterNetEvent('robbery:clientStart')
 AddEventHandler('robbery:clientStart', function(robberyId, duration)
     currentRobberyId = robberyId
     SetScreen('hud')
-    -- Aqui você pode congelar o jogador ou dar armas, se necessário
+    SetNuiFocus(false, false)
+    AddKillFeed('Rogerio Martins', 'Albert', false)
+    UpdateSquad()
 end)
 
 RegisterNetEvent('robbery:syncTimer')
@@ -118,6 +188,7 @@ end)
 
 RegisterNetEvent('robbery:finish')
 AddEventHandler('robbery:finish', function(victory, rewardText)
+    print(victory,rewardText)
     SetScreen('result')
     SendNUIMessage({
         action = "showResults",
@@ -149,7 +220,7 @@ end)
 RegisterNUICallback('closeUI', function(data, cb)
     CloseRobberyUI()
     if currentRobberyId then
-        TriggerServerEvent('robbery:playerExited')
+        TriggerServerEvent('robbery:playerExited',currentRobberyId)
         currentRobberyId = nil
     end
     cb('ok')
@@ -215,3 +286,4 @@ RegisterNUICallback('spectatorNavigate', function(data, cb)
     UpdateSpectatorCamera()
     cb('ok')
 end)
+
