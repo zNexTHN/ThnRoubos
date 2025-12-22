@@ -15,6 +15,8 @@ files {
     'web/dist/assets/**/*'
 }
 
+shared_script "config.lua"
+
 client_scripts {
     "@vrp/lib/utils.lua",
     'client.lua',

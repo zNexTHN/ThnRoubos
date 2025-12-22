@@ -1,24 +1,60 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Bomb, CreditCard, CircleDot, Check, X, Users, DollarSign } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Shield, Bomb, CreditCard, CircleDot, Wrench, Check, X, DollarSign, LucideIcon } from 'lucide-react';
+
+interface LobbyItem {
+  id: string;
+  name: string;
+  owned: boolean;
+}
+
+interface LobbyData {
+  robbery: {
+    name: string;
+    image: string;
+    difficulty: string;
+    reward: string;
+  };
+  police: {
+    current: number;
+    required: number;
+  };
+  items: LobbyItem[];
+  canStart: boolean;
+}
 
 interface LobbyScreenProps {
   onStart: () => void;
+  lobbyData?: LobbyData;
 }
 
-const mockRequirements = {
-  police: { current: 5, required: 6 },
-  items: [
-    { id: 'c4', name: 'C4 Explosivo', icon: Bomb, owned: true },
-    { id: 'card', name: 'Cartão Clonado', icon: CreditCard, owned: true },
-    { id: 'drill', name: 'Serra Industrial', icon: CircleDot, owned: false },
-  ],
-  reward: { min: 400000, max: 600000 },
+// Ícones padrão por ID de item
+const itemIcons: Record<string, LucideIcon> = {
+  c4: Bomb,
+  card: CreditCard,
+  saw: CircleDot,
+  drill: Wrench,
 };
 
-export function LobbyScreen({ onStart }: LobbyScreenProps) {
-  const policeOk = mockRequirements.police.current >= mockRequirements.police.required;
-  const allItemsOwned = mockRequirements.items.every((item) => item.owned);
-  const canStart = policeOk && allItemsOwned;
+const defaultLobbyData: LobbyData = {
+  robbery: {
+    name: "Banco Central",
+    image: "https://images.unsplash.com/photo-1501167786227-4cba60f6d58f?w=800&q=80",
+    difficulty: "Extremo",
+    reward: "R$ 500.000"
+  },
+  police: { current: 5, required: 6 },
+  items: [
+    { id: 'c4', name: 'C4 Explosivo', owned: true },
+    { id: 'card', name: 'Cartão Clonado', owned: true },
+    { id: 'saw', name: 'Serra Industrial', owned: false },
+  ],
+  canStart: false
+};
+
+export function LobbyScreen({ onStart, lobbyData = defaultLobbyData }: LobbyScreenProps) {
+  const policeOk = lobbyData.police.current >= lobbyData.police.required;
+  const allItemsOwned = lobbyData.items.every((item) => item.owned);
+  const canStart = lobbyData.canStart ?? (policeOk && allItemsOwned);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center p-4">
@@ -34,7 +70,7 @@ export function LobbyScreen({ onStart }: LobbyScreenProps) {
           <div 
             className="absolute inset-0 bg-cover bg-center"
             style={{
-              backgroundImage: `url('https://images.unsplash.com/photo-1501167786227-4cba60f6d58f?w=800&q=80')`,
+              backgroundImage: `url('${lobbyData.robbery.image}')`,
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
@@ -47,10 +83,10 @@ export function LobbyScreen({ onStart }: LobbyScreenProps) {
               transition={{ delay: 0.2 }}
             >
               <span className="inline-block px-3 py-1 bg-primary/20 border border-primary/40 rounded-full text-xs font-medium text-primary uppercase tracking-wider mb-2">
-                Dificuldade: Extrema
+                Dificuldade: {lobbyData.robbery.difficulty}
               </span>
-              <h1 className="font-tactical text-3xl font-bold text-foreground tracking-wide">
-                BANCO CENTRAL
+              <h1 className="font-tactical text-3xl font-bold text-foreground tracking-wide uppercase">
+                {lobbyData.robbery.name}
               </h1>
             </motion.div>
           </div>
@@ -72,7 +108,7 @@ export function LobbyScreen({ onStart }: LobbyScreenProps) {
               <div>
                 <p className="text-sm text-muted-foreground">Polícia Online</p>
                 <p className={`font-bold text-lg ${policeOk ? 'text-success' : 'text-primary'}`}>
-                  {mockRequirements.police.current}/{mockRequirements.police.required} Disponíveis
+                  {lobbyData.police.current}/{lobbyData.police.required} Disponíveis
                 </p>
               </div>
             </div>
@@ -91,31 +127,34 @@ export function LobbyScreen({ onStart }: LobbyScreenProps) {
           >
             <p className="text-sm text-muted-foreground mb-3">Itens Necessários</p>
             <div className="grid grid-cols-3 gap-3">
-              {mockRequirements.items.map((item, index) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 + index * 0.1 }}
-                  className={`relative p-4 rounded-xl border text-center transition-all ${
-                    item.owned
-                      ? 'bg-success/10 border-success/30'
-                      : 'bg-muted/30 border-border opacity-50'
-                  }`}
-                >
-                  <item.icon
-                    className={`w-8 h-8 mx-auto mb-2 ${
-                      item.owned ? 'text-success' : 'text-muted-foreground'
+              {lobbyData.items.map((item, index) => {
+                const IconComponent = itemIcons[item.id] || Bomb;
+                return (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 + index * 0.1 }}
+                    className={`relative p-4 rounded-xl border text-center transition-all ${
+                      item.owned
+                        ? 'bg-success/10 border-success/30'
+                        : 'bg-muted/30 border-border opacity-50'
                     }`}
-                  />
-                  <p className="text-xs font-medium truncate">{item.name}</p>
-                  {item.owned && (
-                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-success rounded-full flex items-center justify-center">
-                      <Check className="w-3 h-3 text-success-foreground" />
-                    </div>
-                  )}
-                </motion.div>
-              ))}
+                  >
+                    <IconComponent
+                      className={`w-8 h-8 mx-auto mb-2 ${
+                        item.owned ? 'text-success' : 'text-muted-foreground'
+                      }`}
+                    />
+                    <p className="text-xs font-medium truncate">{item.name}</p>
+                    {item.owned && (
+                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-success rounded-full flex items-center justify-center">
+                        <Check className="w-3 h-3 text-success-foreground" />
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
             </div>
           </motion.div>
 
@@ -133,7 +172,7 @@ export function LobbyScreen({ onStart }: LobbyScreenProps) {
               <div>
                 <p className="text-sm text-muted-foreground">Recompensa Estimada</p>
                 <p className="font-tactical font-bold text-xl text-gold">
-                  R$ {mockRequirements.reward.min.toLocaleString('pt-BR')} - R$ {mockRequirements.reward.max.toLocaleString('pt-BR')}
+                  {lobbyData.robbery.reward}
                 </p>
               </div>
             </div>
