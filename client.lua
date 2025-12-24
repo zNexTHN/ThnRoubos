@@ -84,26 +84,6 @@ function ShowDeathNotice()
     })
 end
 
-function ShowResults(victory, stats)
-    SendNUIMessage({
-        action = "showResults",
-        data = {
-            victory = victory, -- true = missão cumprida, false = falhou
-            mvp = {
-                name = "Player Um",
-                kills = 5,
-                damage = 2500
-            },
-            players = {
-                { name = "Player Um", kills = 5, damage = 2500, xp = 1200 },
-                { name = "Player Dois", kills = 3, damage = 1800, xp = 800 },
-                { name = "Player Três", kills = 1, damage = 600, xp = 400 }
-            },
-            totalReward = "R$ 500.000"
-        }
-    })
-end
-
 -- =========================================================
 -- INTERAÇÃO NO MAPA (DRAW MARKER)
 -- =========================================================
@@ -186,10 +166,36 @@ AddEventHandler('robbery:syncTimer', function(secondsRemaining, totalTime)
     })
 end)
 
+-- Procure o evento robbery:finish e a função ShowResults e substitua-os por isto:
+
+function ShowResults(victory, stats)
+    -- ADICIONADO: Ativar foco para permitir clicar e usar ESC
+    SetNuiFocus(true, true) 
+    
+    SendNUIMessage({
+        action = "showResults",
+        data = {
+            victory = victory,
+            mvp = {
+                name = "Player Um",
+                kills = 5,
+                damage = 2500
+            },
+            players = {
+                { name = "Player Um", kills = 5, damage = 2500, xp = 1200 },
+                { name = "Player Dois", kills = 3, damage = 1800, xp = 800 },
+                { name = "Player Três", kills = 1, damage = 600, xp = 400 }
+            },
+            totalReward = "R$ 500.000"
+        }
+    })
+end
+
 RegisterNetEvent('robbery:finish')
 AddEventHandler('robbery:finish', function(victory, rewardText)
-    print(victory,rewardText)
     SetScreen('result')
+    SetNuiFocus(true, true)
+
     SendNUIMessage({
         action = "showResults",
         data = {

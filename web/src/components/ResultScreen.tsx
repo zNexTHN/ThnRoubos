@@ -23,20 +23,24 @@ export function ResultScreen({ isVictory, stats, onClose }: ResultScreenProps) {
   const mvp = stats.find((s) => s.isMVP);
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowCloseButton(true), 5000);
+    // Reduzi o tempo para 2 segundos para testares mais rápido
+    const timer = setTimeout(() => setShowCloseButton(true), 2000);
     return () => clearTimeout(timer);
   }, []);
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center p-4 bg-transparent backdrop-blur-sm">
+    // CORREÇÃO AQUI: Removido 'bg-transparent backdrop-blur-sm'
+    // Adicionado 'bg-black/60' para escurecer o jogo sem bugar
+    <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/60 z-50">
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.8 }}
         transition={{ duration: 0.5, ease: [0.34, 1.56, 0.64, 1] }}
-        className="glass-panel rounded-3xl w-full max-w-2xl overflow-hidden scanlines"
+        // Mantendo o estilo quadrado (sem rounded)
+        className="glass-panel w-full max-w-2xl overflow-hidden scanlines border-x-4 border-primary/20"
       >
-        {/* Header - Victory/Defeat */}
+        {/* Header */}
         <div
           className={`relative py-8 px-6 text-center ${
             isVictory
@@ -48,7 +52,7 @@ export function ResultScreen({ isVictory, stats, onClose }: ResultScreenProps) {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-            className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-4 ${
+            className={`inline-flex items-center justify-center w-20 h-20 mb-4 ${
               isVictory ? 'bg-success/20 glow-success' : 'bg-primary/20 glow-red'
             }`}
           >
@@ -88,17 +92,17 @@ export function ResultScreen({ isVictory, stats, onClose }: ResultScreenProps) {
             transition={{ delay: 0.5 }}
             className="mx-6 -mt-2 mb-6"
           >
-            <div className="glass-panel rounded-2xl p-4 border-2 border-gold/30 bg-gradient-to-r from-gold/10 to-gold/5 glow-gold">
+            <div className="glass-panel p-4 border-2 border-gold/30 bg-gradient-to-r from-gold/10 to-gold/5 glow-gold">
               <div className="flex items-center gap-4">
                 <div className="relative">
                   <div
-                    className="w-16 h-16 rounded-full bg-muted border-2 border-gold"
+                    className="w-16 h-16 bg-muted border-2 border-gold"
                     style={{
                       backgroundImage: `url(${mvp.avatar})`,
                       backgroundSize: 'cover',
                     }}
                   />
-                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-gold rounded-full flex items-center justify-center">
+                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-gold flex items-center justify-center">
                     <Star className="w-4 h-4 text-warning-foreground" />
                   </div>
                 </div>
@@ -132,8 +136,7 @@ export function ResultScreen({ isVictory, stats, onClose }: ResultScreenProps) {
           transition={{ delay: 0.6 }}
           className="px-6 pb-6"
         >
-          <div className="glass-panel rounded-xl overflow-hidden">
-            {/* Table Header */}
+          <div className="glass-panel overflow-hidden">
             <div className="grid grid-cols-4 gap-4 px-4 py-3 bg-muted/50 border-b border-border">
               <span className="text-xs text-muted-foreground uppercase tracking-wider">
                 Jogador
@@ -149,7 +152,6 @@ export function ResultScreen({ isVictory, stats, onClose }: ResultScreenProps) {
               </span>
             </div>
 
-            {/* Table Body */}
             <div className="divide-y divide-border">
               {stats.map((player, index) => (
                 <motion.div
@@ -161,10 +163,9 @@ export function ResultScreen({ isVictory, stats, onClose }: ResultScreenProps) {
                     player.isMVP ? 'bg-gold/5' : ''
                   }`}
                 >
-                  {/* Player */}
                   <div className="flex items-center gap-3">
                     <div
-                      className="w-8 h-8 rounded-full bg-muted"
+                      className="w-8 h-8 bg-muted"
                       style={{
                         backgroundImage: `url(${player.avatar})`,
                         backgroundSize: 'cover',
@@ -175,18 +176,12 @@ export function ResultScreen({ isVictory, stats, onClose }: ResultScreenProps) {
                     </span>
                     {player.isMVP && <Star className="w-4 h-4 text-gold flex-shrink-0" />}
                   </div>
-
-                  {/* Kills */}
                   <div className="text-center">
                     <span className="font-bold text-lg text-primary">{player.kills}</span>
                   </div>
-
-                  {/* Damage */}
                   <div className="text-center">
                     <span className="font-medium text-foreground">{player.damage.toLocaleString()}</span>
                   </div>
-
-                  {/* XP */}
                   <div className="text-center">
                     <span className="font-bold text-success">+{player.xp.toLocaleString()}</span>
                   </div>
@@ -207,7 +202,7 @@ export function ResultScreen({ isVictory, stats, onClose }: ResultScreenProps) {
             >
               <button
                 onClick={onClose}
-                className="w-full py-4 rounded-xl bg-muted hover:bg-muted/80 border border-border transition-all font-medium text-foreground flex items-center justify-center gap-2"
+                className="w-full py-4 bg-muted hover:bg-muted/80 border border-border transition-all font-medium text-foreground flex items-center justify-center gap-2"
               >
                 <X className="w-5 h-5" />
                 Fechar

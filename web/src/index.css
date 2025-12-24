@@ -43,7 +43,7 @@
     --input: 220 10% 15%;
     --ring: 0 85% 55%;
 
-    --radius: 0.75rem;
+    --radius: 0;
 
     /* Glass Effect */
     --glass-bg: 220 15% 8% / 0.85;
@@ -90,12 +90,16 @@
 
   .glass-panel::before {
     content: '';
-    @apply absolute inset-0 pointer-events-none;
+    @apply absolute inset-0 pointer-events-none rounded-[inherit];
     background: linear-gradient(
       135deg,
       hsl(0 0% 100% / 0.05) 0%,
       transparent 50%
     );
+  }
+
+  .glass-panel::after {
+    @apply rounded-[inherit];
   }
 
   /* Tactical Font */
@@ -155,7 +159,7 @@
 
   /* Health Bar Styles */
   .health-bar {
-    @apply h-2 rounded-full overflow-hidden;
+    @apply h-2 overflow-hidden; /* REMOVIDO: rounded-full */
     background: hsl(var(--muted));
   }
 
@@ -175,6 +179,12 @@
 }
 
 @layer utilities {
+  .clip-fix {
+    @apply overflow-hidden relative z-0;
+    -webkit-mask-image: -webkit-radial-gradient(white, black);
+  }
+  
+
   /* Breathing Animation for Enabled Button */
   .animate-breathe {
     animation: breathe 2s ease-in-out infinite;

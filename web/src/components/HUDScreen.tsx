@@ -40,7 +40,8 @@ export function HUDScreen({ killFeed, squad }: Omit<HUDScreenProps, 'timeRemaini
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -30 }}
               transition={{ duration: 0.3, delay: index * 0.05 }}
-              className="glass-panel rounded-lg px-4 py-2 flex items-center gap-2 text-sm"
+              // REMOVIDO: rounded-lg
+              className="glass-panel px-4 py-2 flex items-center gap-2 text-sm border-l-2 border-primary/50" // Adicionei uma borda lateral para estilo tático
             >
               <Skull className="w-4 h-4 text-primary flex-shrink-0" />
               <span className={entry.isTeamKill ? 'text-secondary' : 'text-primary'}>
@@ -59,7 +60,8 @@ export function HUDScreen({ killFeed, squad }: Omit<HUDScreenProps, 'timeRemaini
         <motion.div
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
-          className="glass-panel rounded-xl p-3"
+          // REMOVIDO: rounded-xl
+          className="glass-panel p-3 border-r-2 border-secondary/50" // Borda lateral para estilo
         >
           <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border">
             <Shield className="w-4 h-4 text-secondary" />
@@ -80,7 +82,8 @@ export function HUDScreen({ killFeed, squad }: Omit<HUDScreenProps, 'timeRemaini
                 {/* Avatar */}
                 <div className="relative">
                   <div
-                    className={`w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold ${
+                    // REMOVIDO: rounded-full (Agora é quadrado)
+                    className={`w-8 h-8 bg-muted flex items-center justify-center text-xs font-bold ${
                       !member.isAlive ? 'bg-primary/30' : ''
                     }`}
                     style={{
@@ -107,6 +110,7 @@ export function HUDScreen({ killFeed, squad }: Omit<HUDScreenProps, 'timeRemaini
                   {member.isAlive && (
                     <div className="space-y-1 mt-1">
                       {/* Health Bar */}
+                      {/* REMOVIDO: rounded-full */}
                       <div className="health-bar h-1.5">
                         <div
                           className={`health-bar-fill ${member.health < 30 ? 'critical' : ''}`}
@@ -115,6 +119,7 @@ export function HUDScreen({ killFeed, squad }: Omit<HUDScreenProps, 'timeRemaini
                       </div>
                       {/* Armor Bar */}
                       {member.armor > 0 && (
+                        /* REMOVIDO: rounded-full */
                         <div className="health-bar h-1">
                           <div
                             className="armor-bar-fill"

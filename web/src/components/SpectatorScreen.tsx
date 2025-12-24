@@ -17,7 +17,6 @@ interface SpectatorScreenProps {
 export function SpectatorScreen({ currentTarget, onPrevious, onNext }: SpectatorScreenProps) {
   return (
     <div className="fixed inset-0 pointer-events-none">
-      {/* Top Center - Death Notice */}
       <div className="absolute top-8 left-1/2 -translate-x-1/2">
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
@@ -40,23 +39,25 @@ export function SpectatorScreen({ currentTarget, onPrevious, onNext }: Spectator
         </motion.div>
       </div>
 
-      {/* Bottom - Control Bar */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 pointer-events-auto">
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass-panel rounded-2xl p-4 flex items-center gap-6"
+          // REMOVIDO: rounded-2xl
+          className="glass-panel p-4 flex items-center gap-6 border-t-2 border-primary/30"
         >
           {/* Previous Button */}
           <button
             onClick={onPrevious}
             className="group flex flex-col items-center gap-1 transition-transform hover:scale-105"
           >
-            <div className="w-14 h-14 rounded-xl bg-muted/50 border border-border flex items-center justify-center transition-colors group-hover:bg-secondary/20 group-hover:border-secondary/50">
+            {/* REMOVIDO: rounded-xl */}
+            <div className="w-14 h-14 bg-muted/50 border border-border flex items-center justify-center transition-colors group-hover:bg-secondary/20 group-hover:border-secondary/50">
               <ChevronLeft className="w-8 h-8 text-foreground group-hover:text-secondary" />
             </div>
+            {/* REMOVIDO: rounded */}
             <span className="text-xs text-muted-foreground">
-              <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Q</kbd> Anterior
+              <kbd className="px-1.5 py-0.5 bg-muted text-xs">Q</kbd> Anterior
             </span>
           </button>
 
@@ -73,9 +74,11 @@ export function SpectatorScreen({ currentTarget, onPrevious, onNext }: Spectator
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Heart className="w-4 h-4 text-success flex-shrink-0" />
-                <div className="flex-1 h-4 bg-muted rounded-full overflow-hidden">
+                {/* REMOVIDO: rounded-full */}
+                <div className="flex-1 h-4 bg-muted overflow-hidden">
                   <motion.div
-                    className={`h-full rounded-full ${
+                    // REMOVIDO: rounded-full
+                    className={`h-full ${
                       currentTarget.health < 30
                         ? 'bg-gradient-to-r from-primary to-primary/70'
                         : 'bg-gradient-to-r from-success to-success/70'
@@ -93,9 +96,11 @@ export function SpectatorScreen({ currentTarget, onPrevious, onNext }: Spectator
               {/* Armor Bar */}
               <div className="flex items-center gap-2">
                 <Shield className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                <div className="flex-1 h-3 bg-muted rounded-full overflow-hidden">
+                {/* REMOVIDO: rounded-full */}
+                <div className="flex-1 h-3 bg-muted overflow-hidden">
                   <motion.div
-                    className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-400"
+                    // REMOVIDO: rounded-full
+                    className="h-full bg-gradient-to-r from-blue-500 to-blue-400"
                     initial={{ width: 0 }}
                     animate={{ width: `${currentTarget.armor}%` }}
                     transition={{ duration: 0.5 }}
@@ -113,11 +118,13 @@ export function SpectatorScreen({ currentTarget, onPrevious, onNext }: Spectator
             onClick={onNext}
             className="group flex flex-col items-center gap-1 transition-transform hover:scale-105"
           >
-            <div className="w-14 h-14 rounded-xl bg-muted/50 border border-border flex items-center justify-center transition-colors group-hover:bg-secondary/20 group-hover:border-secondary/50">
+            {/* REMOVIDO: rounded-xl */}
+            <div className="w-14 h-14 bg-muted/50 border border-border flex items-center justify-center transition-colors group-hover:bg-secondary/20 group-hover:border-secondary/50">
               <ChevronRight className="w-8 h-8 text-foreground group-hover:text-secondary" />
             </div>
+            {/* REMOVIDO: rounded */}
             <span className="text-xs text-muted-foreground">
-              Próximo <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">E</kbd>
+              Próximo <kbd className="px-1.5 py-0.5 bg-muted text-xs">E</kbd>
             </span>
           </button>
         </motion.div>

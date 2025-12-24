@@ -27,7 +27,6 @@ interface LobbyScreenProps {
   lobbyData?: LobbyData;
 }
 
-// Ícones padrão por ID de item
 const itemIcons: Record<string, LucideIcon> = {
   c4: Bomb,
   card: CreditCard,
@@ -63,7 +62,8 @@ export function LobbyScreen({ onStart, lobbyData = defaultLobbyData }: LobbyScre
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
         transition={{ duration: 0.4, ease: [0.34, 1.56, 0.64, 1] }}
-        className="glass-panel rounded-2xl w-full max-w-lg overflow-hidden scanlines"
+        // REMOVIDO: rounded-2xl
+        className="glass-panel w-full max-w-lg overflow-hidden scanlines border-2 border-primary/20"
       >
         {/* Header with Image */}
         <div className="relative h-48 overflow-hidden">
@@ -75,14 +75,14 @@ export function LobbyScreen({ onStart, lobbyData = defaultLobbyData }: LobbyScre
           />
           <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
           
-          {/* Title Overlay */}
           <div className="absolute bottom-0 left-0 right-0 p-6">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <span className="inline-block px-3 py-1 bg-primary/20 border border-primary/40 rounded-full text-xs font-medium text-primary uppercase tracking-wider mb-2">
+              {/* REMOVIDO: rounded-full */}
+              <span className="inline-block px-3 py-1 bg-primary/20 border border-primary/40 text-xs font-medium text-primary uppercase tracking-wider mb-2">
                 Dificuldade: {lobbyData.robbery.difficulty}
               </span>
               <h1 className="font-tactical text-3xl font-bold text-foreground tracking-wide uppercase">
@@ -92,17 +92,18 @@ export function LobbyScreen({ onStart, lobbyData = defaultLobbyData }: LobbyScre
           </div>
         </div>
 
-        {/* Requirements Panel */}
         <div className="p-6 space-y-5">
           {/* Police Requirement */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
-            className="flex items-center justify-between p-4 rounded-xl bg-muted/50 border border-border"
+            // REMOVIDO: rounded-xl
+            className="flex items-center justify-between p-4 bg-muted/50 border border-border"
           >
             <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${policeOk ? 'bg-success/20' : 'bg-primary/20'}`}>
+              {/* REMOVIDO: rounded-lg */}
+              <div className={`p-2 ${policeOk ? 'bg-success/20' : 'bg-primary/20'}`}>
                 <Shield className={`w-5 h-5 ${policeOk ? 'text-success' : 'text-primary'}`} />
               </div>
               <div>
@@ -135,7 +136,8 @@ export function LobbyScreen({ onStart, lobbyData = defaultLobbyData }: LobbyScre
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5 + index * 0.1 }}
-                    className={`relative p-4 rounded-xl border text-center transition-all ${
+                    // REMOVIDO: rounded-xl
+                    className={`relative p-4 border text-center transition-all ${
                       item.owned
                         ? 'bg-success/10 border-success/30'
                         : 'bg-muted/30 border-border opacity-50'
@@ -148,7 +150,8 @@ export function LobbyScreen({ onStart, lobbyData = defaultLobbyData }: LobbyScre
                     />
                     <p className="text-xs font-medium truncate">{item.name}</p>
                     {item.owned && (
-                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-success rounded-full flex items-center justify-center">
+                      // REMOVIDO: rounded-full
+                      <div className="absolute top-1 right-1 w-5 h-5 bg-success flex items-center justify-center">
                         <Check className="w-3 h-3 text-success-foreground" />
                       </div>
                     )}
@@ -163,10 +166,12 @@ export function LobbyScreen({ onStart, lobbyData = defaultLobbyData }: LobbyScre
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.6 }}
-            className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-gold/10 to-gold/5 border border-gold/30"
+            // REMOVIDO: rounded-xl
+            className="flex items-center justify-between p-4 bg-gradient-to-r from-gold/10 to-gold/5 border border-gold/30"
           >
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-gold/20">
+              {/* REMOVIDO: rounded-lg */}
+              <div className="p-2 bg-gold/20">
                 <DollarSign className="w-5 h-5 text-gold" />
               </div>
               <div>
@@ -185,7 +190,8 @@ export function LobbyScreen({ onStart, lobbyData = defaultLobbyData }: LobbyScre
             transition={{ delay: 0.7 }}
             onClick={onStart}
             disabled={!canStart}
-            className={`w-full py-4 rounded-xl font-tactical font-bold text-lg tracking-wider transition-all ${
+            // REMOVIDO: rounded-xl
+            className={`w-full py-4 font-tactical font-bold text-lg tracking-wider transition-all ${
               canStart
                 ? 'bg-success text-success-foreground animate-breathe hover:brightness-110'
                 : 'bg-muted text-muted-foreground cursor-not-allowed'

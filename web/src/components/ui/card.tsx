@@ -1,11 +1,23 @@
 import * as React from "react";
-
 import { cn } from "@/lib/utils";
 
 const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("rounded-lg border bg-card text-card-foreground shadow-sm", className)} {...props} />
+  <div 
+    ref={ref} 
+    className={cn(
+      "rounded-lg border bg-card text-card-foreground shadow-sm",
+      // Adiciona estas classes para corrigir o bug do FiveM/Webkit:
+      "overflow-hidden relative z-0", 
+      className
+    )} 
+    // Adiciona este style inline para forçar o recorte (hack do mask-image)
+    style={{ WebkitMaskImage: "-webkit-radial-gradient(white, black)" }} 
+    {...props} 
+  />
 ));
 Card.displayName = "Card";
+
+// ... (resto do ficheiro permanece igual)
 
 const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
