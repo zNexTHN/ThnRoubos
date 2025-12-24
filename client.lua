@@ -192,16 +192,34 @@ function ShowResults(victory, stats)
 end
 
 RegisterNetEvent('robbery:finish')
-AddEventHandler('robbery:finish', function(victory, rewardText)
+AddEventHandler('robbery:finish', function(victory, rewardText, statsList)
     SetScreen('result')
     SetNuiFocus(true, true)
+
+    -- Define o MVP (quem teve mais kills ou dano)
+    local mvpData = { name = "Ninguém", kills = 0, damage = 0 }
+    
+    if statsList and #statsList > 0 then
+        -- Ordena ou acha o melhor (lógica simples aqui)
+        for _, p in pairs(statsList) do
+            if p.damage > mvpData.damage then
+                mvpData = p
+            end
+        end
+    else
+        statsList = {} -- Garante que não quebre se vier nil
+    end
 
     SendNUIMessage({
         action = "showResults",
         data = {
             victory = victory,
-            mvp = { name = "Você", kills = 0, damage = 0 },
-            players = {},
+            mvp = { 
+                name = mvpData.name, 
+                kills = mvpData.kills, 
+                damage = mvpData.damage 
+            },
+            players = statsList, -- Passa a lista real vinda do servidor
             totalReward = rewardText
         }
     })
@@ -386,4 +404,25 @@ Citizen.CreateThread(function()
 			end
 		end
 	end
+end)
+
+AddEventHandler('gameEventTriggered', function (name, args)
+    if name == "CEventNetworkEntityDamage" then
+        local victim = args[1]
+        local attacker = args[2]
+        local isFatal = args[4] == 1
+        
+        -- Verifica se o atacante sou EU e se estou em um roubo ativo
+        if attacker == PlayerPedId() and currentRobberyId then
+            if IsEntityAPed(victim) and IsPedAPlayer(victim) then
+                -- Estimativa de dano baseada na arma (simplificado, pois o evento não dá o valor exato nativamente sem loop complexo)
+                local weapon = GetSelectedPedWeapon(attacker)
+                local damageAmt = GetWeaponDamage(weapon) 
+                if damageAmt < 10 then damageAmt = 20 end -- Valor mínimo caso a arma retorne 0
+                
+                -- Envia para o servidor
+                TriggerServerEvent('robbery:recordDamage', currentRobberyId, damageAmt)
+            end
+        end
+    end
 end)

@@ -64,13 +64,21 @@ end
 function StartRobbery(robberyId, robberSource, policeUsers)
     local config = Config.Roubos[robberyId]
     
-    -- Configurar estado
+
+    local user_id = vRP.getUserId(robberSource)
+    local fullName = 'Lider'
+    if user_id then
+        local identity = vRP.getUserIdentity(user_id)
+        if identity then
+            fullName = '#'..user_id..' '..identity.name..' '..identity.firstname
+        end
+    end
     activeRobberies[robberyId] = {
         timeRemaining = config.duration,
         robberSource = robberSource,
         active = true,
         squad = { -- Lista de bandidos (pode expandir se for grupo)
-            [robberSource] = { name = "Líder", health = 100, kills = 0, active = true }
+            [robberSource] = { name = fullName, health = 100, kills = 0, active = true }
         }
     }
 
@@ -111,27 +119,41 @@ function FinishRobbery(robberyId, victory)
 
     local config = Config.Roubos[robberyId]
     activeRobberies[robberyId].active = false 
-    print(activeRobberies[robberyId].robberSource)
     robberyCooldowns[robberyId] = os.time() + config.cooldown
-    if victory then
-        local user_id = vRP.getUserId(data.robberSource)
-        
-        -- Pagamento
-        if config.rewardMoney > 0 then
-            vRP.giveInventoryItem(user_id, "dinheiro_sujo", config.rewardMoney)
-        end
-        
-        -- Dar XP
-        AddPlayerXP(user_id, Config.WinXP)
 
-        TriggerClientEvent('robbery:finish', data.robberSource, true, "R$ "..config.rewardMoney)
-    else
-        TriggerClientEvent('robbery:finish', data.robberSource, false, "0")
+    -- Prepara a lista de estatísticas para o NUI
+    local statsList = {}
+    
+    -- Coleta stats dos criminosos (você pode incluir policiais se quiser)
+    if data.teams and data.teams.criminals then
+        for source, info in pairs(data.teams.criminals) do
+            local playerSource = tonumber(source)
+            local user_id = vRP.getUserId(playerSource)
+
+            -- Adiciona à lista de stats
+            table.insert(statsList, {
+                name = info.name or "Desconhecido",
+                kills = info.kills or 0,
+                damage = info.damage or 0,
+                xp = victory and Config.WinXP or 0 -- Mostra quanto XP ganhou
+            })
+
+            if user_id then
+                if victory then
+                    if config.rewardMoney > 0 then
+                        vRP.giveInventoryItem(user_id, "dinheiro_sujo", config.rewardMoney)
+                    end
+                    AddPlayerXP(user_id, Config.WinXP)
+                end
+                
+                -- Envia o evento de finalização COM a lista de stats
+                TriggerClientEvent('robbery:finish', playerSource, victory, "R$ "..config.rewardMoney, statsList)
+            end
+        end
     end
 
     activeRobberies[robberyId] = nil
 end
-
 
 -- Callback para sair da UI (Cancelar roubo se sair antes)
 RegisterServerEvent('robbery:playerExited')
@@ -168,15 +190,25 @@ AddEventHandler("robbery:updateZoneState", function(robberyId, isInside)
     local robbery = activeRobberies[robberyId]
     
     if isInside then
+
+
+        
         -- Define o time baseado na permissão
         local isPolice = vRP.hasPermission(user_id, Config.PolicePermission)
         local team = isPolice and "police" or "criminals"
         
-        -- Adiciona jogador ao time correspondente
+        local fullName = "ID: "..user_id 
+        local identity = vRP.getUserIdentity(user_id)
+        if identity then
+            fullName = fullName..' '..identity.name..' '..identity.firstname
+        end
+
         robbery.teams[team][source] = {
-            name = "ID: "..user_id, -- Ou pegar identidade
+            name = fullName,
             health = GetEntityHealth(GetPlayerPed(source)),
-            active = true
+            active = true,
+            kills = 0,    -- ADICIONADO
+            damage = 0    -- ADICIONADO
         }
         
         -- Notifica que entrou no combate
@@ -213,10 +245,22 @@ function StartRobbery(robberyId, initiatorSource)
     }
     
     -- Força a adição do iniciador (caso o evento da polyzone demore)
+    -- ... dentro de activeRobberies[robberyId].teams.criminals[initiatorSource] ... 
+
+    local user_id = vRP.getUserId(initiatorSource)
+    local fullName = 'Lider'
+    if user_id then
+        local identity = vRP.getUserIdentity(user_id)
+        if identity then
+            fullName = '#'..user_id..' '..identity.name..' '..identity.firstname
+        end
+    end
     activeRobberies[robberyId].teams.criminals[initiatorSource] = {
-        name = "Líder",
+        name = fullName,
         health = 200,
-        active = true
+        active = true,
+        kills = 0,    -- ADICIONADO
+        damage = 0    -- ADICIONADO
     }
 
     -- Notifica Policiais Globalmente
@@ -255,6 +299,23 @@ function StartRobbery(robberyId, initiatorSource)
         end
     end)
 end
+
+RegisterServerEvent('robbery:recordDamage')
+AddEventHandler('robbery:recordDamage', function(robberyId, damageAmount)
+    local source = source
+    local rData = activeRobberies[robberyId]
+
+    if rData then
+        -- Verifica se o jogador está em algum time
+        local team = nil
+        if rData.teams.criminals[source] then team = "criminals" end
+        if rData.teams.police[source] then team = "police" end
+
+        if team then
+            rData.teams[team][source].damage = rData.teams[team][source].damage + damageAmount
+        end
+    end
+end)
 
 RegisterServerEvent('diedplayer')
 AddEventHandler('diedplayer',function(killer,reason)
@@ -322,6 +383,18 @@ AddEventHandler('diedplayer',function(killer,reason)
                                     isTeamKill = false
                                 })
                             end
+                        end
+
+
+                        local killerSource = killer -- O 'killer' que vem do evento diedplayer geralmente é o source do assassino
+    
+    -- Verifica se o assassino está no roubo (pode ser polícia ou bandido)
+                        local kTeam = nil
+                        if rData.teams.criminals[killerSource] then kTeam = "criminals" end
+                        if rData.teams.police[killerSource] then kTeam = "police" end
+
+                        if kTeam then
+                            rData.teams[kTeam][killerSource].kills = rData.teams[kTeam][killerSource].kills + 1
                         end
                     end
                 end
