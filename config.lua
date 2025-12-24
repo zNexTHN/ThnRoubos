@@ -10,34 +10,19 @@ Config.KillXP = 10 -- XP por kill
 Config.Roubos = {
     ["bancocentral"] = {
         name = "Banco Central",
-        type = "banco", -- usado para definir icone ou estilo
+        type = "banco",
         coords = vector3(116.07, 762.13, 210.56),
+        zoneRadius = 50.0, -- ADICIONADO: Tamanho da area do roubo (PolyZone)
         urlImage = 'https://criticalhits.com.br/wp-content/uploads/2022/03/gta-online-bancos-2-910x512.jpg',
 
-        -- Requisitos
-        policeRequired = 0,
-        itemsRequired = {
-            -- { item = "c4", amount = 1, name = "Explosivo C4" },
-            -- { item = "cartao_acesso", amount = 1, name = "Cartão de Acesso" }
-        },
+        policeRequired = 0, -- Teste com 0 para facilitar
+        itemsRequired = {},
         
         duration = 30,
         cooldown = 1800,
         
         rewardMoney = 500000,
-        rewardItems = {
-            --{ item = "barra_ouro", min = 5, max = 10 }
-        }
-    },
-    ["loja_departamento"] = {
-        name = "Loja de Departamento",
-        type = "loja",
-        coords = vector3(25.72, -1346.96, 29.49),
-        policeRequired = 2,
-        itemsRequired = {},
-        duration = 120,
-        cooldown = 600,
-        rewardMoney = 5000,
         rewardItems = {}
-    }
+    },
+    -- ... outros roubos
 }

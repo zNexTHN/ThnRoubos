@@ -110,9 +110,9 @@ function FinishRobbery(robberyId, victory)
     if not data then return end
 
     local config = Config.Roubos[robberyId]
-    activeRobberies[robberyId].active = false
+    activeRobberies[robberyId].active = false 
+    print(activeRobberies[robberyId].robberSource)
     robberyCooldowns[robberyId] = os.time() + config.cooldown
-
     if victory then
         local user_id = vRP.getUserId(data.robberSource)
         
@@ -132,34 +132,200 @@ function FinishRobbery(robberyId, victory)
     activeRobberies[robberyId] = nil
 end
 
--- Sistema de Kills e Spectator
-AddEventHandler('baseevents:onPlayerDied', function(killerType, coords)
-    local victimSource = source
-    -- Verificar se o jogador estava em algum roubo ativo
-    for rId, rData in pairs(activeRobberies) do
-        if rData.squad[victimSource] then
-            rData.squad[victimSource].active = false
-            
-            -- Notificar HUD sobre morte
-            TriggerClientEvent('robbery:updateKillFeed', rData.robberSource, {
-                killer = "Desconhecido", victim = "Aliado", isTeamKill = false
-            })
-            
-            -- Ativar modo espectador para quem morreu
-            TriggerClientEvent('robbery:startSpectator', victimSource, rData.squad)
-            break
-        end
-    end
-end)
 
 -- Callback para sair da UI (Cancelar roubo se sair antes)
 RegisterServerEvent('robbery:playerExited')
-AddEventHandler('robbery:playerExited', function()
+AddEventHandler('robbery:playerExited', function(robberyId)
     local source = source
     for rId, rData in pairs(activeRobberies) do
         if rData.robberSource == source then
             activeRobberies[robberyId] = nil -- Cancela o roubo
             TriggerClientEvent("Notify", source, "aviso", "Você abandonou o roubo.")
+        end
+    end
+end)
+
+-- Estrutura de dados atualizada
+-- activeRobberies[id] = {
+--     teams = {
+--         criminals = { [source] = { info } },
+--         police = { [source] = { info } }
+--     },
+--     state = "waiting", -- "waiting", "active", "finished"
+--     ...
+-- }
+
+-- Evento disparado quando o cliente entra/sai da PolyZone
+RegisterNetEvent("robbery:updateZoneState")
+AddEventHandler("robbery:updateZoneState", function(robberyId, isInside)
+    local source = source
+    local user_id = vRP.getUserId(source)
+
+    print(robberyId, isInside)
+    
+    if not activeRobberies[robberyId] then return end
+    
+    local robbery = activeRobberies[robberyId]
+    
+    if isInside then
+        -- Define o time baseado na permissão
+        local isPolice = vRP.hasPermission(user_id, Config.PolicePermission)
+        local team = isPolice and "police" or "criminals"
+        
+        -- Adiciona jogador ao time correspondente
+        robbery.teams[team][source] = {
+            name = "ID: "..user_id, -- Ou pegar identidade
+            health = GetEntityHealth(GetPlayerPed(source)),
+            active = true
+        }
+        
+        -- Notifica que entrou no combate
+        TriggerClientEvent("Notify", source, "aviso", "Você entrou na zona de conflito ("..team..")")
+    else
+        -- Remove o jogador dos times se sair da zona
+        if robbery.teams["police"][source] then robbery.teams["police"][source] = nil end
+        if robbery.teams["criminals"][source] then robbery.teams["criminals"][source] = nil end
+    end
+end)
+
+src.requestStart = function(robberyId)
+    local source = source
+    local user_id = vRP.getUserId(source)
+    local config = Config.Roubos[robberyId]
+
+    -- (Verificações de cooldown e itens originais aqui...)
+
+    -- Inicia o roubo
+    StartRobbery(robberyId, source)
+    return true
+end
+
+function StartRobbery(robberyId, initiatorSource)
+    local config = Config.Roubos[robberyId]
+    
+    activeRobberies[robberyId] = {
+        timeRemaining = config.duration,
+        active = true,
+        teams = {
+            criminals = {}, -- Será preenchido via PolyZone
+            police = {}     -- Será preenchido via PolyZone
+        }
+    }
+    
+    -- Força a adição do iniciador (caso o evento da polyzone demore)
+    activeRobberies[robberyId].teams.criminals[initiatorSource] = {
+        name = "Líder",
+        health = 200,
+        active = true
+    }
+
+    -- Notifica Policiais Globalmente
+    local policeUsers = vRP.getUsersByPermission(Config.PolicePermission)
+    for _, pId in pairs(policeUsers) do
+        local player = vRP.getUserSource(pId)
+        if player then
+            TriggerClientEvent("Notify", player, "importante", "Roubo iniciado no " .. config.name)
+            vRPclient.setGPS(player, config.coords.x, config.coords.y)
+        end
+    end
+
+    -- Inicia Timer no Cliente do iniciador
+    TriggerClientEvent('robbery:clientStart', initiatorSource, robberyId, config.duration)
+
+    -- Thread principal do roubo
+    Citizen.CreateThread(function()
+        while activeRobberies[robberyId] and activeRobberies[robberyId].timeRemaining > 0 do
+            Citizen.Wait(1000)
+            local rData = activeRobberies[robberyId]
+            
+            if not rData then break end -- Segurança
+
+            rData.timeRemaining = rData.timeRemaining - 1
+            
+            -- Sincroniza timer com TODOS os criminosos na zona
+            for src, _ in pairs(rData.teams.criminals) do
+                TriggerClientEvent('robbery:syncTimer', src, rData.timeRemaining, config.duration)
+            end
+            
+            -- Se o tempo acabar, criminosos "ganham" o dinheiro e começa a fuga/tiroteio livre
+            if rData.timeRemaining == 0 then
+                 -- Lógica de entregar dinheiro ou liberar itens
+                 -- O roubo tecnicamente continua até um time ser eliminado ou fugirem
+            end
+        end
+    end)
+end
+
+RegisterServerEvent('diedplayer')
+AddEventHandler('diedplayer',function(killer,reason)
+    local source = source
+	local user_id = vRP.getUserId(source)
+    for rId, rData in pairs(activeRobberies) do
+        -- Verifica se a vítima estava em algum time
+        local team = nil
+        if rData.teams.criminals[source] then team = "criminals" end
+        if rData.teams.police[source] then team = "police" end
+
+        if team then
+            -- Marca como morto/inativo
+            rData.teams[team][source].active = false
+            
+            local teammates = {}
+            for src, data in pairs(rData.teams[team]) do
+                if data.active and src ~= source then
+                    table.insert(teammates, { src = src, name = data.name })
+                end
+            end
+
+            -- Se ainda houver aliados vivos, ativa espectador 
+            if #teammates > 0 then
+                TriggerClientEvent('robbery:startSpectator', source, teammates)
+            else
+                print('Chegou!')
+                TriggerClientEvent("Notify", source, "aviso", "Seu time foi eliminado.")
+                -- Lógica de fim de roubo: Polícia Venceu
+                print(json.encode(activeRobberies[rId]))
+                FinishRobbery(rId, team == "police") -- Se police morreu, criminosos ganham, e vice-versa
+            end
+            
+            -- Envia Killfeed para todos na zona
+            local allPlayers = {}
+            for k,v in pairs(rData.teams.criminals) do table.insert(allPlayers, k) end
+            for k,v in pairs(rData.teams.police) do table.insert(allPlayers, k) end
+            
+
+            print('Chegou!')
+            if killer == "**Invalid**" or killer == nil or killer == source then
+                local identity = vRP.getUserIdentity(user_id)
+                if identity then                        
+                    local fullName = identity.name..' '..identity.firstname
+                    for _, playerSrc in pairs(allPlayers) do
+                        print(playerSrc)
+                        TriggerClientEvent('robbery:updateKillFeed', playerSrc, {
+                            killer = fullName or "Inimigo",
+                            victim = rData.teams[team][source].name,
+                            isTeamKill = true
+                        })
+                    end
+                end
+            else 
+                if reason == 1 then
+                    local killer_id = vRP.getUserId(killer)
+                    if killer_id then
+                        local identity = vRP.getUserIdentity(killer_id)
+                        if identity then                        
+                            local fullName = identity.name..' '..identity.firstname
+                            for _, playerSrc in pairs(allPlayers) do
+                                TriggerClientEvent('robbery:updateKillFeed', playerSrc, {
+                                    killer = fullName or "Inimigo",
+                                    victim = rData.teams[team][source].name,
+                                    isTeamKill = false
+                                })
+                            end
+                        end
+                    end
+                end
+            end
         end
     end
 end)

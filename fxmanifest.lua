@@ -1,3 +1,4 @@
+thn_disabletrigger "yes"
 shared_script "@ThnAC/native.lua"
 shared_script "@ThnAC/natives.lua"
 fx_version 'cerulean'
@@ -19,6 +20,8 @@ shared_script "config.lua"
 
 client_scripts {
     "@vrp/lib/utils.lua",
+    "@PolyZone/client.lua",
+    "@PolyZone/CircleZone.lua",
     'client.lua',
 }
 

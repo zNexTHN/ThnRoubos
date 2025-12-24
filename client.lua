@@ -293,3 +293,97 @@ RegisterNUICallback('spectatorNavigate', function(data, cb)
     cb('ok')
 end)
 
+
+
+-- ... (manter imports iniciais) ...
+
+-- =========================================================
+-- POLYZONE E DETECÇÃO DE ÁREA
+-- =========================================================
+Citizen.CreateThread(function()
+    for id, data in pairs(Config.Roubos) do
+        -- Cria a zona de combate/interação
+        local zone = CircleZone:Create(data.coords, data.zoneRadius, {
+            name = "robbery_"..id,
+            debugPoly = false,
+            useZ = true
+        })
+
+        -- Evento ao entrar/sair da zona
+        zone:onPlayerInOut(function(isPointInside)
+            if currentRobberyId == id or not currentRobberyId then
+                TriggerServerEvent("robbery:updateZoneState", id, isPointInside)
+            end
+        end)
+
+        -- EXEMPLO DE TARGET (Substituindo o DrawMarker se usar ox_target)
+        -- exports.ox_target:addSphereZone({
+        --     coords = data.coords,
+        --     radius = 1.0,
+        --     options = {
+        --         {
+        --             name = 'start_robbery_'..id,
+        --             icon = 'fa-solid fa-mask',
+        --             label = 'Iniciar Roubo',
+        --             onSelect = function()
+        --                 OpenLobby(id)
+        --             end
+        --         }
+        --     }
+        -- })
+    end
+end)
+
+-- =========================================================
+-- GERENCIAMENTO DE ESPECTADOR (ATUALIZADO)
+-- =========================================================
+
+-- O servidor enviará a lista atualizada de aliados vivos
+RegisterNetEvent('robbery:updateSpectatorList')
+AddEventHandler('robbery:updateSpectatorList', function(newSquadList)
+    squadList = newSquadList
+    -- Se o alvo atual morreu ou saiu, reseta para o primeiro
+    if spectatorTargetIndex > #squadList then 
+        spectatorTargetIndex = 1 
+    end
+    UpdateSpectatorCamera()
+end)
+
+
+
+local alreadyDead = false
+Citizen.CreateThread(function()
+	while true do
+		Citizen.Wait(20)
+		if GetGameTimer() > 15000 then
+			for k,v in pairs(GetActivePlayers()) do
+				N_0x31698aa80e0223f8(v)
+			end
+			local playerPed = PlayerPedId()
+			if IsEntityDead(playerPed) and alreadyDead == false then
+				local killer = GetPedKiller(playerPed)
+				local killerId = 0
+				for k,v in pairs(GetActivePlayers()) do
+					if killer == GetPlayerPed(v) then
+						killerId = GetPlayerServerId(v)
+						break
+					end
+				end
+				if killer == playerPed then
+					TriggerServerEvent('diedplayer',nil,nil)
+					alreadyDead = true
+				elseif killerId and killerId ~= 0 then
+					TriggerServerEvent('diedplayer',tostring(killerId),1)
+					alreadyDead = true
+				else
+					TriggerServerEvent('diedplayer',nil,nil)
+					alreadyDead = true
+				end
+				alreadyDead = true
+			end
+			if not IsEntityDead(playerPed) and alreadyDead == true then
+				alreadyDead = false
+			end
+		end
+	end
+end)
