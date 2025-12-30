@@ -1,13 +1,28 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { LobbyScreen } from '@/components/LobbyScreen';
+import { TeamSelectionScreen } from '@/components/TeamSelectionScreen';
 import { HUDScreen } from '@/components/HUDScreen';
 import { SpectatorScreen } from '@/components/SpectatorScreen';
 import { ResultScreen } from '@/components/ResultScreen';
 import { DevTools } from '@/components/DevTools';
 import { useFiveMListener, sendCallback } from '@/hooks/useFiveM';
 
-type Screen = 'lobby' | 'hud' | 'spectator' | 'result-win' | 'result-lose';
+type Screen = 'lobby' | 'team-selection-criminals' | 'team-selection-police' | 'hud' | 'spectator' | 'result-win' | 'result-lose';
+
+interface TeamPlayer {
+  id: string;
+  name: string;
+  avatar?: string;
+  level?: number;
+  role?: string;
+}
+
+interface TeamData {
+  availablePlayers: TeamPlayer[];
+  maxTeamSize: number;
+  minTeamSize: number;
+}
 
 // Tipos de dados
 interface LobbyData {
@@ -94,9 +109,35 @@ const defaultStats: PlayerStats[] = [
   { id: '4', name: 'Ninja', avatar: '', kills: 4, damage: 720, xp: 280, isMVP: false },
 ];
 
+const defaultCriminalsData: TeamData = {
+  availablePlayers: [
+    { id: 'c1', name: 'Shadow_X', level: 45, role: 'Hacker' },
+    { id: 'c2', name: 'NightRider', level: 38, role: 'Driver' },
+    { id: 'c3', name: 'GhostFace', level: 52, role: 'Explosivos' },
+    { id: 'c4', name: 'Viper_01', level: 41, role: 'Atirador' },
+    { id: 'c5', name: 'BladeRunner', level: 33, role: 'Suporte' },
+    { id: 'c6', name: 'DarkMatter', level: 47, role: 'Infiltrador' },
+  ],
+  maxTeamSize: 4,
+  minTeamSize: 2,
+};
+
+const defaultPoliceData: TeamData = {
+  availablePlayers: [
+    { id: 'p1', name: 'Capitão_Silva', level: 60, role: 'Comandante' },
+    { id: 'p2', name: 'Oficial_Rex', level: 42, role: 'SWAT' },
+    { id: 'p3', name: 'Sargento_Lima', level: 38, role: 'Negociador' },
+    { id: 'p4', name: 'Agente_Cruz', level: 35, role: 'Sniper' },
+    { id: 'p5', name: 'Tenente_Rocha', level: 48, role: 'Tático' },
+    { id: 'p6', name: 'Cabo_Santos', level: 31, role: 'Patrulha' },
+  ],
+  maxTeamSize: 6,
+  minTeamSize: 3,
+};
+
 const Index = () => {
   // Estados principais
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const [currentScreen, setCurrentScreen] = useState<Screen>('lobby');
   
   // Estados do Lobby
@@ -116,6 +157,11 @@ const Index = () => {
   // Estados do Result
   const [isVictory, setIsVictory] = useState(true);
   const [stats, setStats] = useState<PlayerStats[]>(defaultStats);
+  
+  // Estados da Seleção de Equipe
+  const [criminalsData, setCriminalsData] = useState<TeamData>(defaultCriminalsData);
+  const [policeData, setPoliceData] = useState<TeamData>(defaultPoliceData);
+  const [selectedCriminals, setSelectedCriminals] = useState<string[]>([]);
 
   // Listener para mensagens NUI do FiveM (Lua)
   useFiveMListener(useCallback((data) => {
@@ -131,6 +177,8 @@ const Index = () => {
       case 'setScreen':
         if (data.screen === 'result') {
           setCurrentScreen(data.victory ? 'result-win' : 'result-lose');
+        } else if (data.screen === 'team-selection-criminals' || data.screen === 'team-selection-police') {
+          setCurrentScreen(data.screen);
         } else {
           setCurrentScreen(data.screen);
         }
@@ -211,6 +259,18 @@ const Index = () => {
         })));
         setCurrentScreen(data.data.victory ? 'result-win' : 'result-lose');
         break;
+        
+      // Mostrar seleção de bandidos
+      case 'showCriminalsSelection':
+        setCriminalsData(data.data);
+        setCurrentScreen('team-selection-criminals');
+        break;
+        
+      // Mostrar seleção de policiais
+      case 'showPoliceSelection':
+        setPoliceData(data.data);
+        setCurrentScreen('team-selection-police');
+        break;
     }
   }, []));
 
@@ -257,8 +317,33 @@ const Index = () => {
   }, []);
 
   const handleStartOperation = useCallback(() => {
-    sendCallback('startRobbery', { timestamp: Date.now() });
+    // Ir para seleção de bandidos primeiro
+    setCurrentScreen('team-selection-criminals');
+  }, []);
+
+  const handleCriminalsConfirm = useCallback((selected: string[]) => {
+    setSelectedCriminals(selected);
+    sendCallback('confirmCriminals', { players: selected, timestamp: Date.now() });
+    // Ir para seleção de policiais
+    setCurrentScreen('team-selection-police');
+  }, []);
+
+  const handleCriminalsCancel = useCallback(() => {
+    setCurrentScreen('lobby');
+  }, []);
+
+  const handlePoliceConfirm = useCallback((selected: string[]) => {
+    sendCallback('confirmTeam', { 
+      criminals: selectedCriminals, 
+      police: selected, 
+      timestamp: Date.now() 
+    });
     setCurrentScreen('hud');
+  }, [selectedCriminals]);
+
+  const handlePoliceCancel = useCallback(() => {
+    // Voltar para seleção de bandidos
+    setCurrentScreen('team-selection-criminals');
   }, []);
 
   const handleCloseResult = useCallback(() => {
@@ -288,6 +373,30 @@ const Index = () => {
           />
         )}
 
+        {currentScreen === 'team-selection-criminals' && (
+          <TeamSelectionScreen
+            key="team-selection-criminals"
+            type="criminals"
+            availablePlayers={criminalsData.availablePlayers}
+            maxTeamSize={criminalsData.maxTeamSize}
+            minTeamSize={criminalsData.minTeamSize}
+            onConfirm={handleCriminalsConfirm}
+            onCancel={handleCriminalsCancel}
+          />
+        )}
+
+        {currentScreen === 'team-selection-police' && (
+          <TeamSelectionScreen
+            key="team-selection-police"
+            type="police"
+            availablePlayers={policeData.availablePlayers}
+            maxTeamSize={policeData.maxTeamSize}
+            minTeamSize={policeData.minTeamSize}
+            onConfirm={handlePoliceConfirm}
+            onCancel={handlePoliceCancel}
+          />
+        )}
+
         {currentScreen === 'hud' && (
           <HUDScreen
             key="hud"
@@ -314,6 +423,7 @@ const Index = () => {
           />
         )}
       </AnimatePresence>
+
     </div>
   );
 };
